@@ -1,0 +1,1802 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI产业链实时动态监控</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #0d1117;
+            color: #e6edf3;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+        }
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(22, 27, 34, 0.98);
+            border-bottom: 1px solid #30363d;
+            z-index: 1000;
+            padding: 0 24px;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .nav-tabs { display: flex; gap: 8px; }
+        .nav-tab {
+            padding: 10px 20px;
+            background: transparent;
+            border: none;
+            color: #8b949e;
+            cursor: pointer;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .nav-tab:hover { background: #30363d; color: #e6edf3; }
+        .nav-tab.active { background: #30363d; color: #e6edf3; }
+        .main-content { margin-top: 64px; padding: 0; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .market-overview {
+            background: linear-gradient(135deg, #1a1f29 0%, #161b22 100%);
+            border-bottom: 1px solid #30363d;
+            padding: 12px 24px;
+            display: flex;
+            gap: 32px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .overview-item { display: flex; align-items: center; gap: 8px; }
+        .overview-label { font-size: 12px; color: #8b949e; }
+        .overview-value { font-size: 16px; font-weight: 600; }
+        .color-up { color: #ff4d4f; }
+        .color-down { color: #3fb950; }
+        .chain-container { padding: 24px; }
+        .sector-block {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            margin-bottom: 32px;
+            overflow: hidden;
+        }
+        .sector-header {
+            background: linear-gradient(90deg, #1a1f29 0%, #161b22 100%);
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            border-bottom: 1px solid #30363d;
+        }
+        .sector-name { font-size: 18px; font-weight: 700; }
+        .sector-stats { display: flex; gap: 16px; align-items: center; }
+        .sector-stat {
+            font-size: 14px;
+            font-weight: 600;
+            padding: 4px 12px;
+            border-radius: 20px;
+            background: #0d1117;
+        }
+        .sector-content { padding: 24px; }
+        .level-container { margin-bottom: 32px; }
+        .level-label {
+            font-size: 12px;
+            color: #8b949e;
+            margin-bottom: 16px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .nodes-row { display: flex; gap: 16px; flex-wrap: wrap; }
+        .node {
+            background: #0d1117;
+            border: 2px solid #30363d;
+            border-radius: 12px;
+            padding: 16px 20px;
+            cursor: pointer;
+            min-width: 260px;
+            transition: all 0.2s;
+        }
+        .node:hover { border-color: #58a6ff; }
+        .node.level-downstream { border-color: #58a6ff; }
+        .node.level-midstream { border-color: #3fb950; }
+        .node.level-upstream { border-color: #ffa657; }
+        .node-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+        .node-name { font-size: 15px; font-weight: 600; }
+        .node-stats { display: flex; gap: 8px; align-items: center; }
+        .node-stat {
+            font-size: 12px;
+            font-weight: 600;
+            padding: 3px 8px;
+            border-radius: 6px;
+            background: #161b22;
+        }
+        .expand-btn {
+            width: 28px;
+            height: 28px;
+            background: #30363d;
+            border: none;
+            border-radius: 50%;
+            color: #e6edf3;
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .expand-btn:hover { background: #58a6ff; }
+        .stocks-panel {
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid #30363d;
+            display: none;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .node.expanded .stocks-panel { display: flex; }
+        .stock-card {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 12px;
+            min-width: 260px;
+            flex: 0 0 auto;
+        }
+        .stock-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+        .stock-name { font-size: 14px; font-weight: 600; }
+        .stock-code { font-size: 12px; color: #8b949e; }
+        .stock-comment { font-size: 12px; color: #e6edf3; line-height: 1.5; }
+        .blog-container { max-width: 900px; margin: 0 auto; padding: 24px; }
+        .blog-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; }
+        .blog-title { font-size: 28px; font-weight: 700; }
+        .btn { padding: 10px 20px; background: #30363d; border: 1px solid #30363d; color: #e6edf3; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 500; }
+        .btn-primary { background: #58a6ff; border-color: #58a6ff; color: #0d1117; }
+        .article-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+        .article-card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 20px; cursor: pointer; }
+        .article-card:hover { border-color: #58a6ff; transform: translateY(-2px); transition: all 0.2s; }
+        .article-card-title { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+        .form-group { margin-bottom: 20px; }
+        .form-input { 
+            width: 100%; 
+            padding: 12px 16px; 
+            background: #0d1117; 
+            border: 1px solid #30363d; 
+            border-radius: 8px; 
+            color: #e6edf3; 
+            font-size: 15px; 
+            outline: none; 
+            box-sizing: border-box;
+        }
+        .form-input:focus { border-color: #58a6ff; }
+        .form-textarea { min-height: 300px; font-family: monospace; resize: vertical; }
+        .markdown-body { line-height: 1.8; }
+        .markdown-body h1, .markdown-body h2, .markdown-body h3 { margin: 24px 0 12px; padding-bottom: 8px; border-bottom: 1px solid #30363d; }
+        .markdown-body p { margin: 12px 0; }
+        .markdown-body code { background: #30363d; padding: 2px 6px; border-radius: 4px; font-family: monospace; }
+        .copyright {
+            text-align: center;
+            padding: 30px;
+            color: #8b949e;
+            font-size: 14px;
+            border-top: 1px solid #30363d;
+        }
+        /* 今日纵览样式 */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+        .dashboard-card {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 20px;
+        }
+        .dashboard-title {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: #e6edf3;
+        }
+        .gainer-loser-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .stock-item {
+            background: #0d1117;
+            border-radius: 8px;
+            padding: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .stock-info {
+            flex: 1;
+        }
+        .stock-name {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        .stock-sector {
+            font-size: 12px;
+            color: #8b949e;
+        }
+        .stock-change {
+            font-size: 16px;
+            font-weight: 700;
+        }
+        .sector-rank-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .sector-rank-item {
+            background: #0d1117;
+            border-radius: 8px;
+            padding: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .sector-rank-name {
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .market-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+        .stat-card {
+            background: #0d1117;
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        .stat-label {
+            font-size: 12px;
+            color: #8b949e;
+        }
+        /* 板块折叠样式 */
+        .sector-block.collapsed .sector-content {
+            display: none;
+        }
+        .sector-header .toggle-icon {
+            transition: transform 0.3s ease;
+        }
+        .sector-block.collapsed .sector-header .toggle-icon {
+            transform: rotate(-90deg);
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-tabs">
+            <button class="nav-tab active" data-tab="overview">今日AI股市纵览</button>
+            <button class="nav-tab" data-tab="cn">A股/港股</button>
+            <button class="nav-tab" data-tab="us">美股</button>
+            <button class="nav-tab" data-tab="blog">作者自留地</button>
+        </div>
+        <div id="datetime" style="font-family: monospace; font-size: 14px; color: #8b949e;"></div>
+    </nav>
+    <main class="main-content">
+        <div class="tab-content active" id="tab-overview">
+            <div class="chain-container">
+                <div class="dashboard-grid">
+                    <!-- 今日最大涨幅 -->
+                    <div class="dashboard-card">
+                        <h2 class="dashboard-title">📈 今日最大涨幅</h2>
+                        <div class="gainer-loser-list" id="top-gainers"></div>
+                    </div>
+                    <!-- 今日最大跌幅 -->
+                    <div class="dashboard-card">
+                        <h2 class="dashboard-title">📉 今日最大跌幅</h2>
+                        <div class="gainer-loser-list" id="top-losers"></div>
+                    </div>
+                    <!-- 板块热度排行 -->
+                    <div class="dashboard-card">
+                        <h2 class="dashboard-title">🏆 板块热度排行</h2>
+                        <div class="sector-rank-list" id="sector-rank"></div>
+                    </div>
+                    <!-- 市场总体概况 -->
+                    <div class="dashboard-card">
+                        <h2 class="dashboard-title">📊 市场总体概况</h2>
+                        <div class="market-stats-grid" id="market-stats"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="tab-content" id="tab-cn">
+            <div class="market-overview">
+                <div class="overview-item"><span class="overview-label">整体涨跌幅</span><span class="overview-value" id="cn-total-change">--</span></div>
+                <div class="overview-item"><span class="overview-label">整体上涨占比</span><span class="overview-value" id="cn-total-upratio">--</span></div>
+                <div class="overview-item"><span class="overview-label">涨幅最大</span><span class="overview-value" id="cn-top-gainer">--</span></div>
+                <div class="overview-item"><span class="overview-label">跌幅最大</span><span class="overview-value" id="cn-top-loser">--</span></div>
+            </div>
+            <div class="chain-container"><div id="cn-sectors"></div></div>
+        </div>
+        <div class="tab-content" id="tab-us">
+            <div class="market-overview">
+                <div class="overview-item"><span class="overview-label">整体涨跌幅</span><span class="overview-value" id="us-total-change">--</span></div>
+                <div class="overview-item"><span class="overview-label">整体上涨占比</span><span class="overview-value" id="us-total-upratio">--</span></div>
+                <div class="overview-item"><span class="overview-label">涨幅最大</span><span class="overview-value" id="us-top-gainer">--</span></div>
+                <div class="overview-item"><span class="overview-label">跌幅最大</span><span class="overview-value" id="us-top-loser">--</span></div>
+            </div>
+            <div class="chain-container"><div id="us-sectors"></div></div>
+        </div>
+        <div class="tab-content" id="tab-blog">
+            <div class="blog-container" id="blog-list">
+                <div class="blog-header">
+                    <h1 class="blog-title">作者自留地</h1>
+                    <div style="display: flex; gap: 12px;">
+                        <button class="btn" id="import-btn">导入</button>
+                        <button class="btn" id="export-btn">导出</button>
+                        <button class="btn btn-primary" id="new-btn">新文章</button>
+                    </div>
+                </div>
+                <div class="article-grid" id="article-grid"></div>
+            </div>
+            <div class="blog-container" id="blog-editor" style="display: none;">
+                <div class="blog-header">
+                    <h1 class="blog-title" id="editor-title">编辑文章</h1>
+                    <div style="display: flex; gap: 12px;">
+                        <button class="btn" id="cancel-edit-btn">取消</button>
+                        <button class="btn btn-primary" id="save-btn">保存</button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label style="display: block; margin-bottom: 8px; color: #8b949e;">标题</label>
+                    <input type="text" id="article-title-input" class="form-input" placeholder="输入文章标题">
+                </div>
+                <div class="form-group">
+                    <label style="display: block; margin-bottom: 8px; color: #8b949e;">标签（逗号分隔）</label>
+                    <input type="text" id="article-tags-input" class="form-input" placeholder="输入标签，用逗号分隔">
+                </div>
+                <div class="form-group">
+                    <label style="display: block; margin-bottom: 8px; color: #8b949e;">内容（支持Markdown）</label>
+                    <textarea id="article-content-input" class="form-input form-textarea" placeholder="在此输入文章内容，支持Markdown格式"></textarea>
+                </div>
+            </div>
+            <div class="blog-container" id="article-view" style="display: none;">
+                <div class="blog-header">
+                    <h1 class="blog-title" id="view-title"></h1>
+                    <div style="display: flex; gap: 12px;">
+                        <button class="btn" id="back-btn">返回</button>
+                        <button class="btn" id="edit-btn">编辑</button>
+                        <button class="btn" id="delete-btn">删除</button>
+                    </div>
+                </div>
+                <div id="article-content-preview"></div>
+            </div>
+        </div>
+        <div class="copyright">@Max Zhou</div>
+    </main>
+
+    <script>
+        const SECTOR_NAMES = ['AI计算芯片', '存储芯片', 'PCB', '光互联', '机房/数据中心基础设施', 'AI服务器/整机', '半导体设备与材料', '其他关键细分领域'];
+        const DEFAULT_ARTICLES = [
+            {
+                id: '1',
+                title: 'AI产业链投资逻辑分析',
+                content: '# AI产业链投资逻辑分析\n\n## 上游：芯片是基石\n\nAI产业的发展离不开强大的算力支撑，而芯片则是算力的核心。从EDA软件、半导体设备到晶圆制造，每个环节都至关重要。',
+                tags: ['AI', '投资', '产业链'],
+                createdAt: new Date('2024-01-15').toISOString(),
+                updatedAt: new Date('2024-01-15').toISOString()
+            },
+            {
+                id: '2',
+                title: '光模块行业展望',
+                content: '# 光模块行业展望\n\n光模块是数据中心互联的关键设备，随着AI大模型训练需求的爆发，800G、1.6T高速光模块需求正在快速增长。',
+                tags: ['光通信', '光模块', 'AI'],
+                createdAt: new Date('2024-01-10').toISOString(),
+                updatedAt: new Date('2024-01-10').toISOString()
+            }
+        ];
+
+        function generateStockData(stock) {
+            const change = (Math.random() - 0.45) * 12;
+            return { ...stock, change: change.toFixed(2), changeNum: change };
+        }
+
+        function createCNChainData() {
+            return {
+                'AI计算芯片': {
+                    downstream: { 
+                        '芯片设计(CPU/GPU/ASIC/FPGA)': { stocks: [
+                            { code: '688041', name: '海光信息', market: 'A股', comment: '国内领先的高端CPU/GPU芯片设计公司' },
+                            { code: '688256', name: '寒武纪', market: 'A股', comment: '专注于AI芯片研发设计领域的龙头企业' },
+                            { code: '300474', name: '景嘉微', market: 'A股', comment: '国内GPU设计研发的领军企业' },
+                            { code: '688525', name: '龙芯中科', market: 'A股', comment: '拥有自主指令集的国产CPU设计公司' },
+                            { code: '688385', name: '复旦微电', market: 'A股', comment: '专注于FPGA芯片设计的领先企业' },
+                            { code: '688123', name: '安路科技', market: 'A股', comment: '国内FPGA芯片设计领域的新秀' },
+                            { code: '002049', name: '紫光国微', market: 'A股', comment: '特种集成电路芯片设计公司' }
+                        ]},
+                        '品牌/模组': { stocks: [
+                            { code: '688041', name: '海光信息', market: 'A股', comment: '提供高端计算芯片的品牌厂商' },
+                            { code: '688256', name: '寒武纪', market: 'A股', comment: 'AI芯片产品与解决方案提供商' }
+                        ]}
+                    },
+                    midstream: {
+                        '晶圆制造': { stocks: [
+                            { code: '688981', name: '中芯国际', market: 'A股', comment: '国内领先的14nm等先进制程晶圆代工厂' },
+                            { code: '688347', name: '华虹公司', market: 'A股', comment: '专注于特色工艺的晶圆制造企业' }
+                        ]},
+                        '先进封装': { stocks: [
+                            { code: '600584', name: '长电科技', market: 'A股', comment: '全球领先的半导体封装测试企业' },
+                            { code: '002156', name: '通富微电', market: 'A股', comment: 'AMD重要合作伙伴，封测龙头' },
+                            { code: '002185', name: '华天科技', market: 'A股', comment: '国内三大封测领域的重要企业' },
+                            { code: '688362', name: '甬矽电子', market: 'A股', comment: '专注于高端芯片封装测试企业' }
+                        ]}
+                    },
+                    upstream: {
+                        'EDA软件': { stocks: [
+                            { code: '688206', name: '华大九天', market: 'A股', comment: '国内EDA软件行业的龙头企业' },
+                            { code: '688209', name: '概伦电子', market: 'A股', comment: '专注于EDA软件领域的重要企业' },
+                            { code: '301095', name: '广立微', market: 'A股', comment: '专注于成品率提升的EDA企业' }
+                        ]},
+                        'IP核授权': { stocks: [
+                            { code: '688521', name: '芯原股份', market: 'A股', comment: '国内领先的半导体IP授权服务提供商' }
+                        ]},
+                        '硅片/晶圆': { stocks: [
+                            { code: '688126', name: '沪硅产业', market: 'A股', comment: '国内领先的半导体硅片制造商' },
+                            { code: '605358', name: '立昂微', market: 'A股', comment: '专注于半导体硅片和功率器件' },
+                            { code: '002129', name: 'TCL中环', market: 'A股', comment: '半导体硅片材料的重要供应商' },
+                            { code: '688432', name: '有研硅', market: 'A股', comment: '半导体硅材料研发生产企业' }
+                        ]},
+                        '光刻胶': { stocks: [
+                            { code: '603650', name: '彤程新材', market: 'A股', comment: '国内光刻胶材料领域的领先企业' },
+                            { code: '300346', name: '南大光电', market: 'A股', comment: '专注于电子特气和光刻胶材料' },
+                            { code: '300655', name: '晶瑞电材', market: 'A股', comment: '电子化学品和光刻胶材料供应商' },
+                            { code: '300236', name: '上海新阳', market: 'A股', comment: '电子化学品和半导体材料供应商' }
+                        ]},
+                        '特种气体': { stocks: [
+                            { code: '688268', name: '华特气体', market: 'A股', comment: '国内电子特种气体领域的领先企业' },
+                            { code: '300346', name: '南大光电', market: 'A股', comment: '电子特气和电子材料供应商' },
+                            { code: '688106', name: '金宏气体', market: 'A股', comment: '电子特种气体综合供应商' },
+                            { code: '002549', name: '凯美特气', market: 'A股', comment: '电子特种气体生产企业' }
+                        ]},
+                        '靶材': { stocks: [
+                            { code: '300666', name: '江丰电子', market: 'A股', comment: '国内半导体靶材领域的龙头企业' },
+                            { code: '600206', name: '有研新材', market: 'A股', comment: '半导体材料和靶材供应商' },
+                            { code: '300706', name: '阿石创', market: 'A股', comment: 'PVD镀膜材料和靶材生产企业' }
+                        ]},
+                        'CMP材料': { stocks: [
+                            { code: '688019', name: '安集科技', market: 'A股', comment: 'CMP抛光液和抛光材料供应商' }
+                        ]},
+                        '半导体设备': { stocks: [
+                            { code: '002371', name: '北方华创', market: 'A股', comment: '国内半导体设备领域的龙头企业' },
+                            { code: '688012', name: '中微公司', market: 'A股', comment: '专注于刻蚀设备的领先企业' },
+                            { code: '688072', name: '拓荆科技', market: 'A股', comment: '专注于薄膜沉积设备的重要企业' },
+                            { code: '688120', name: '华海清科', market: 'A股', comment: 'CMP设备领域的领先企业' },
+                            { code: '688037', name: '芯源微', market: 'A股', comment: '涂胶显影设备的重要企业' },
+                            { code: '688561', name: '中科飞测', market: 'A股', comment: '半导体检测设备企业' },
+                            { code: '300567', name: '精测电子', market: 'A股', comment: '面板和半导体检测设备' },
+                            { code: '688147', name: '微导纳米', market: 'A股', comment: 'ALD设备的重要供应商' }
+                        ]}
+                    }
+                },
+                '存储芯片': {
+                    downstream: { 
+                        '品牌/模组商': { stocks: [
+                            { code: '301308', name: '江波龙', market: 'A股', comment: '旗下拥有FORESEE品牌的存储模组' },
+                            { code: '688525', name: '佰维存储', market: 'A股', comment: '专注于存储芯片和存储模组' },
+                            { code: '001309', name: '德明利', market: 'A股', comment: '存储控制芯片和模组厂商' }
+                        ]}
+                    },
+                    midstream: {
+                        '存储模组制造': { stocks: [
+                            { code: '301308', name: '江波龙', market: 'A股', comment: '存储模组制造的领先企业' },
+                            { code: '688525', name: '佰维存储', market: 'A股', comment: '存储模组的重要制造商' },
+                            { code: '001309', name: '德明利', market: 'A股', comment: '存储控制芯片和模组' }
+                        ]},
+                        '封测': { stocks: [
+                            { code: '000021', name: '深科技', market: 'A股', comment: '存储芯片封测领域的重要企业' },
+                            { code: '600584', name: '长电科技', market: 'A股', comment: '半导体封装测试的全球领先' },
+                            { code: '002156', name: '通富微电', market: 'A股', comment: '存储芯片封测的重要企业' }
+                        ]}
+                    },
+                    upstream: {
+                        'HBM材料': { stocks: [
+                            { code: '002409', name: '雅克科技', market: 'A股', comment: 'HBM材料前驱体的供应商' },
+                            { code: '688300', name: '联瑞新材', market: 'A股', comment: '电子级硅微粉等材料供应商' },
+                            { code: '688535', name: '华海诚科', market: 'A股', comment: '半导体封装材料供应商' },
+                            { code: '688035', name: '德邦科技', market: 'A股', comment: '电子封装材料和胶粘剂供应商' }
+                        ]},
+                        '存储晶圆(DRAM/Flash)': { stocks: [
+                            { code: '603986', name: '兆易创新', market: 'A股', comment: 'NOR Flash和MCU芯片设计' },
+                            { code: '300223', name: '北京君正', market: 'A股', comment: '车载和消费电子存储芯片' },
+                            { code: '688110', name: '东芯股份', market: 'A股', comment: 'NAND Flash存储芯片设计' },
+                            { code: '688766', name: '普冉股份', market: 'A股', comment: 'NOR Flash和EEPROM' }
+                        ]},
+                        '存储控制芯片': { stocks: [
+                            { code: '001309', name: '德明利', market: 'A股', comment: '存储卡和存储控制芯片' },
+                            { code: '688008', name: '澜起科技', market: 'A股', comment: '内存接口芯片供应商' },
+                            { code: '688123', name: '聚辰股份', market: 'A股', comment: 'EEPROM存储芯片供应商' }
+                        ]}
+                    }
+                },
+                'PCB': {
+                    downstream: { 
+                        '设计/应用品牌': { stocks: [
+                            { code: '002916', name: '深南电路', market: 'A股', comment: '直接供货至服务器、通信设备厂商' },
+                            { code: '002463', name: '沪电股份', market: 'A股', comment: '高端PCB应用于通信和汽车领域' },
+                            { code: '002938', name: '胜宏科技', market: 'A股', comment: '高端PCB制造商和设计' },
+                            { code: '002436', name: '鹏鼎控股', market: 'A股', comment: '全球领先的PCB制造商' }
+                        ]}
+                    },
+                    midstream: {
+                        '高端PCB制造': { stocks: [
+                            { code: '002938', name: '胜宏科技', market: 'A股', comment: '专注于高端PCB制造' },
+                            { code: '002463', name: '沪电股份', market: 'A股', comment: '高端PCB制造的领先企业' },
+                            { code: '002916', name: '深南电路', market: 'A股', comment: '内资高端PCB制造龙头' },
+                            { code: '002436', name: '鹏鼎控股', market: 'A股', comment: '全球最大的PCB制造商' },
+                            { code: '002384', name: '东山精密', market: 'A股', comment: 'PCB和FPC制造' },
+                            { code: '603228', name: '景旺电子', market: 'A股', comment: 'PCB制造的重要企业' },
+                            { code: '600183', name: '生益电子', market: 'A股', comment: 'PCB制造企业' },
+                            { code: '001238', name: '广合科技', market: 'A股', comment: 'PCB制造和组装服务' },
+                            { code: '603920', name: '世运电路', market: 'A股', comment: 'PCB制造商' },
+                            { code: '001236', name: '威尔高', market: 'A股', comment: 'PCB制造和设计' }
+                        ]}
+                    },
+                    upstream: {
+                        '覆铜板(CCL)': { stocks: [
+                            { code: '600183', name: '生益科技', market: 'A股', comment: '国内覆铜板CCL行业龙头' },
+                            { code: '688519', name: '南亚新材', market: 'A股', comment: '电子级玻纤材料' },
+                            { code: '603186', name: '华正新材', market: 'A股', comment: '覆铜板和复合材料' },
+                            { code: '002636', name: '金安国纪', market: 'A股', comment: '覆铜板生产企业' }
+                        ]},
+                        '电子玻纤布': { stocks: [
+                            { code: '603256', name: '宏和科技', market: 'A股', comment: '电子级玻璃纤维布' },
+                            { code: '600176', name: '中国巨石', market: 'A股', comment: '玻璃纤维和复合材料' },
+                            { code: '002168', name: '国际复材', market: 'A股', comment: '玻璃纤维材料' },
+                            { code: '002080', name: '中材科技', market: 'A股', comment: '特种纤维复合材料' }
+                        ]},
+                        '铜箔': { stocks: [
+                            { code: '600110', name: '诺德股份', market: 'A股', comment: '锂电铜箔和电子铜箔' },
+                            { code: '301217', name: '铜冠铜箔', market: 'A股', comment: '高精度电子铜箔' },
+                            { code: '301519', name: '德福科技', market: 'A股', comment: '锂电铜箔和电子铜箔' },
+                            { code: '688388', name: '嘉元科技', market: 'A股', comment: '高性能铜箔材料供应商' }
+                        ]},
+                        '电子树脂': { stocks: [
+                            { code: '601208', name: '东材科技', market: 'A股', comment: '电子级环氧树脂等电子树脂' }
+                        ]},
+                        'PCB化学品/药水': { stocks: [
+                            { code: '002741', name: '光华科技', market: 'A股', comment: 'PCB化学品和电子化学品' },
+                            { code: '688600', name: '天承科技', market: 'A股', comment: 'PCB湿电子化学品' },
+                            { code: '688578', name: '三孚新材', market: 'A股', comment: '电子化学品和PCB药水' }
+                        ]},
+                        'PCB设备': { stocks: [
+                            { code: '301200', name: '大族数控', market: 'A股', comment: 'PCB数控钻铣设备' },
+                            { code: '688630', name: '芯碁微装', market: 'A股', comment: 'PCB直接成像设备' },
+                            { code: '688700', name: '东威科技', market: 'A股', comment: 'PCB电镀设备' },
+                            { code: '688003', name: '天准科技', market: 'A股', comment: 'PCB检测设备' },
+                            { code: '688531', name: '日联科技', market: 'A股', comment: 'X射线检测设备' }
+                        ]},
+                        'EDA': { stocks: [
+                            { code: '688206', name: '华大九天', market: 'A股', comment: 'EDA软件领域的龙头' },
+                            { code: '688209', name: '概伦电子', market: 'A股', comment: 'EDA软件和服务' }
+                        ]}
+                    }
+                },
+                '光互联': {
+                    downstream: { 
+                        '整机设备商': { stocks: [
+                            { code: '000063', name: '中兴通讯', market: 'A股', comment: '通信设备和光通信设备' },
+                            { code: '600498', name: '烽火通信', market: 'A股', comment: '光通信和光纤光缆' },
+                            { code: '301191', name: '菲菱科思', market: 'A股', comment: '网络通信设备制造商' }
+                        ]},
+                        '数据中心/运营商': { stocks: [
+                            { code: '600845', name: '宝信软件', market: 'A股', comment: 'IDC和工业软件' },
+                            { code: '603881', name: '数据港', market: 'A股', comment: '数据中心基础设施' },
+                            { code: '300738', name: '奥飞数据', market: 'A股', comment: 'IDC和云计算基础设施' }
+                        ]}
+                    },
+                    midstream: {
+                        '光器件(无源/有源)': { stocks: [
+                            { code: '300394', name: '天孚通信', market: 'A股', comment: '光器件封装和光器件' },
+                            { code: '688195', name: '腾景科技', market: 'A股', comment: '光无源和光有源器件' },
+                            { code: '300570', name: '太辰光', market: 'A股', comment: '光无源器件' },
+                            { code: '300548', name: '博创科技', market: 'A股', comment: '光器件和光模块' },
+                            { code: '688313', name: '仕佳光子', market: 'A股', comment: 'PLC光分路器' }
+                        ]},
+                        '光模块(400G/800G/1.6T)': { stocks: [
+                            { code: '300308', name: '中际旭创', market: 'A股', comment: '全球领先的光模块供应商' },
+                            { code: '300502', name: '新易盛', market: 'A股', comment: '光模块和光器件' },
+                            { code: '002281', name: '光迅科技', market: 'A股', comment: '光器件和光模块' },
+                            { code: '000988', name: '华工科技', market: 'A股', comment: '光模块和激光设备' },
+                            { code: '603083', name: '剑桥科技', market: 'A股', comment: '光模块和网络设备' },
+                            { code: '600522', name: '中天科技', market: 'A股', comment: '光通信和新能源' }
+                        ]},
+                        '光引擎': { stocks: [
+                            { code: '300394', name: '天孚通信', market: 'A股', comment: '光引擎和光器件' }
+                        ]}
+                    },
+                    upstream: {
+                        '光芯片(VCSEL/EML/硅光)': { stocks: [
+                            { code: '688498', name: '源杰科技', market: 'A股', comment: '高速光芯片研发和生产' },
+                            { code: '002281', name: '光迅科技', market: 'A股', comment: '光芯片和光器件' },
+                            { code: '688313', name: '仕佳光子', market: 'A股', comment: 'PLC光分路器和光芯片' },
+                            { code: '688048', name: '长光华芯', market: 'A股', comment: '半导体激光芯片' },
+                            { code: '300323', name: '华灿光电', market: 'A股', comment: 'LED芯片和光芯片' },
+                            { code: '600703', name: '三安光电', market: 'A股', comment: 'LED和化合物半导体' }
+                        ]},
+                        '光器件材料': { stocks: [
+                            { code: '002428', name: '云南锗业', market: 'A股', comment: '磷化铟材料供应商' },
+                            { code: '300620', name: '光库科技', market: 'A股', comment: '薄膜铌酸锂器件' },
+                            { code: '603773', name: '沃格光电', market: 'A股', comment: 'TGV玻璃基材料' }
+                        ]},
+                        '光通信设备': { stocks: [
+                            { code: '300776', name: '帝尔激光', market: 'A股', comment: 'TGV激光打孔设备' },
+                            { code: '300757', name: '罗博特科', market: 'A股', comment: '光模块设备' }
+                        ]},
+                        'EDA/设计工具': { stocks: [
+                            { code: '688206', name: '华大九天', market: 'A股', comment: 'EDA软件的龙头' },
+                            { code: '688209', name: '概伦电子', market: 'A股', comment: 'EDA软件和服务' }
+                        ]}
+                    }
+                },
+                '机房/数据中心基础设施': {
+                    downstream: { 
+                        'IDC建设运营商': { stocks: [
+                            { code: '600845', name: '宝信软件', market: 'A股', comment: 'IDC和工业软件企业' },
+                            { code: '603881', name: '数据港', market: 'A股', comment: '数据中心基础设施' },
+                            { code: '300738', name: '奥飞数据', market: 'A股', comment: 'IDC和云计算' },
+                            { code: '300383', name: '光环新网', market: 'A股', comment: 'IDC和云计算服务' },
+                            { code: '001237', name: '润泽科技', market: 'A股', comment: 'IDC和数字经济' },
+                            { code: '603887', name: '城地香江', market: 'A股', comment: 'IDC和数据中心' },
+                            { code: '603003', name: '龙宇股份', market: 'A股', comment: 'IDC和大数据' }
+                        ]},
+                        '智算中心/云服务商': { stocks: [
+                            { code: '600050', name: '中国联通', market: 'A股', comment: '电信运营商和云服务' },
+                            { code: '600941', name: '中国移动', market: 'A股', comment: '电信运营商和云服务' },
+                            { code: '601728', name: '中国电信', market: 'A股', comment: '电信运营商和云服务' }
+                        ]}
+                    },
+                    midstream: {
+                        '液冷系统(冷板/CDU/浸没式)': { stocks: [
+                            { code: '002837', name: '英维克', market: 'A股', comment: '温控和液冷系统' },
+                            { code: '300499', name: '高澜股份', market: 'A股', comment: '热管理和液冷系统' },
+                            { code: '301018', name: '申菱环境', market: 'A股', comment: '温控和环境设备' },
+                            { code: '300990', name: '同飞股份', market: 'A股', comment: '工业制冷设备和液冷' },
+                            { code: '603912', name: '佳力图', market: 'A股', comment: '数据中心精密空调' },
+                            { code: '300249', name: '依米康', market: 'A股', comment: '数据中心基础设施' }
+                        ]},
+                        '电源系统(UPS/HVDC/BBU)': { stocks: [
+                            { code: '002851', name: '麦格米特', market: 'A股', comment: '电力电子和电源产品' },
+                            { code: '300827', name: '欧陆通', market: 'A股', comment: '开关电源和适配器' },
+                            { code: '002335', name: '科华数据', market: 'A股', comment: 'UPS电源和数据中心' },
+                            { code: '002518', name: '科士达', market: 'A股', comment: 'UPS和数据中心' },
+                            { code: '002364', name: '中恒电气', market: 'A股', comment: 'HVDC和直流电源' },
+                            { code: '002245', name: '蔚蓝锂芯', market: 'A股', comment: '锂电池和储能' },
+                            { code: '002733', name: '雄韬股份', market: 'A股', comment: '铅酸和锂电池' },
+                            { code: '300068', name: '南都电源', market: 'A股', comment: '储能和通信电源' }
+                        ]},
+                        '服务器电源': { stocks: [
+                            { code: '000066', name: '中国长城', market: 'A股', comment: '服务器和自主可控' },
+                            { code: '300827', name: '欧陆通', market: 'A股', comment: '服务器电源' },
+                            { code: '002851', name: '麦格米特', market: 'A股', comment: '服务器电源和电力电子' }
+                        ]},
+                        '温控/配电设备': { stocks: [
+                            { code: '002837', name: '英维克', market: 'A股', comment: '精密温控设备' },
+                            { code: '301018', name: '申菱环境', market: 'A股', comment: '专业温控设备' },
+                            { code: '605333', name: '朗威股份', market: 'A股', comment: '数据中心配电' }
+                        ]},
+                        '柴油发电机': { stocks: [
+                            { code: '300153', name: '科泰电源', market: 'A股', comment: '柴油发电机组' },
+                            { code: '600590', name: '泰豪科技', market: 'A股', comment: '发电机组和军工' },
+                            { code: '000880', name: '潍柴重机', market: 'A股', comment: '发动机和发电机组' }
+                        ]}
+                    },
+                    upstream: {
+                        '液冷材料(冷却液/氟化液)': { stocks: [
+                            { code: '600160', name: '巨化股份', market: 'A股', comment: '制冷剂和氟化工' },
+                            { code: '300037', name: '新宙邦', market: 'A股', comment: '电解液和氟化工' },
+                            { code: '605020', name: '永和股份', market: 'A股', comment: '氟化工和制冷剂' },
+                            { code: '002372', name: '新莱应材', market: 'A股', comment: '半导体和半导体材料' }
+                        ]},
+                        '机房建材/线缆': { stocks: [
+                            { code: '601869', name: '长飞光纤', market: 'A股', comment: '光纤光缆和光通信' },
+                            { code: '600487', name: '亨通光电', market: 'A股', comment: '光纤光缆和海洋工程' },
+                            { code: '600522', name: '中天科技', market: 'A股', comment: '光通信和海缆' }
+                        ]}
+                    }
+                },
+                'AI服务器/整机': {
+                    downstream: { 
+                        '品牌厂商/系统集成': { stocks: [
+                            { code: '000977', name: '浪潮信息', market: 'A股', comment: '服务器和AI服务器' },
+                            { code: '603019', name: '中科曙光', market: 'A股', comment: '服务器和高端计算' },
+                            { code: '000938', name: '紫光股份', market: 'A股', comment: '网络设备和服务器' }
+                        ]},
+                        '终端客户(互联网/政企/运营商)': { stocks: [
+                            { code: '600050', name: '中国联通', market: 'A股', comment: '电信运营商' },
+                            { code: '600941', name: '中国移动', market: 'A股', comment: '电信运营商' },
+                            { code: '601728', name: '中国电信', market: 'A股', comment: '电信运营商' }
+                        ]}
+                    },
+                    midstream: {
+                        '服务器代工/制造': { stocks: [
+                            { code: '601138', name: '工业富联', market: 'A股', comment: '服务器代工和智能制造' },
+                            { code: '000977', name: '浪潮信息', market: 'A股', comment: '服务器制造和服务器' },
+                            { code: '603019', name: '中科曙光', market: 'A股', comment: '服务器和高端计算' },
+                            { code: '603296', name: '华勤技术', market: 'A股', comment: '智能硬件ODM' },
+                            { code: '000938', name: '紫光股份', market: 'A股', comment: '服务器和网络设备' },
+                            { code: '600498', name: '烽火通信', market: 'A股', comment: '通信设备和服务器' },
+                            { code: '002261', name: '拓维信息', market: 'A股', comment: '服务器和鸿蒙生态' },
+                            { code: '000034', name: '神州数码', market: 'A股', comment: 'IT分销和服务器' },
+                            { code: '000066', name: '中国长城', market: 'A股', comment: '自主可控和服务器' }
+                        ]}
+                    },
+                    upstream: {
+                        '核心零部件(芯片/存储/PCB/光互联)': { stocks: [
+                            { code: '688041', name: '海光信息', market: 'A股', comment: '高端CPU/GPU芯片' },
+                            { code: '688256', name: '寒武纪', market: 'A股', comment: 'AI芯片研发设计' },
+                            { code: '300308', name: '中际旭创', market: 'A股', comment: '光模块供应商' },
+                            { code: '002463', name: '沪电股份', market: 'A股', comment: '服务器PCB' },
+                            { code: '002938', name: '胜宏科技', market: 'A股', comment: '高端PCB制造' }
+                        ]},
+                        '高速连接器': { stocks: [
+                            { code: '002475', name: '立讯精密', market: 'A股', comment: '连接器和精密制造' },
+                            { code: '002179', name: '中航光电', market: 'A股', comment: '连接器和光器件' },
+                            { code: '002897', name: '意华股份', market: 'A股', comment: '通信连接器' },
+                            { code: '688668', name: '鼎通科技', market: 'A股', comment: '连接器和精密组件' },
+                            { code: '688629', name: '华丰科技', market: 'A股', comment: '高速连接器' }
+                        ]},
+                        '高速铜缆': { stocks: [
+                            { code: '002130', name: '沃尔核材', market: 'A股', comment: '核级电缆和新材料' },
+                            { code: '300913', name: '兆龙互连', market: 'A股', comment: '高速线缆和连接器' },
+                            { code: '300252', name: '金信诺', market: 'A股', comment: '通信线缆和组件' },
+                            { code: '002475', name: '立讯精密', market: 'A股', comment: '连接器和线缆' }
+                        ]},
+                        '结构件/散热': { stocks: [
+                            { code: '002837', name: '英维克', market: 'A股', comment: '散热和热管理' },
+                            { code: '300602', name: '飞荣达', market: 'A股', comment: '导热和电磁屏蔽' },
+                            { code: '002600', name: '领益智造', market: 'A股', comment: '精密功能件' }
+                        ]}
+                    }
+                },
+                '半导体设备与材料': {
+                    downstream: { 
+                        '晶圆厂/封测厂': { stocks: [
+                            { code: '688981', name: '中芯国际', market: 'A股', comment: '国内晶圆代工' },
+                            { code: '600584', name: '长电科技', market: 'A股', comment: '封测龙头' },
+                            { code: '002156', name: '通富微电', market: 'A股', comment: '封测企业' }
+                        ]}
+                    },
+                    midstream: {
+                        '薄膜设备(CVD/PVD/ALD)': { stocks: [
+                            { code: '002371', name: '北方华创', market: 'A股', comment: '半导体设备龙头' },
+                            { code: '688072', name: '拓荆科技', market: 'A股', comment: '薄膜沉积设备' },
+                            { code: '688147', name: '微导纳米', market: 'A股', comment: 'ALD设备' }
+                        ]},
+                        '刻蚀设备': { stocks: [
+                            { code: '688012', name: '中微公司', market: 'A股', comment: '刻蚀设备龙头' },
+                            { code: '002371', name: '北方华创', market: 'A股', comment: '刻蚀设备和薄膜设备' }
+                        ]},
+                        '光刻/涂胶显影': { stocks: [
+                            { code: '688037', name: '芯源微', market: 'A股', comment: '涂胶显影设备' },
+                            { code: '600895', name: '张江高科', market: 'A股', comment: '持股上海微电子' }
+                        ]},
+                        '检测/量测设备': { stocks: [
+                            { code: '688561', name: '中科飞测', market: 'A股', comment: '半导体检测设备' },
+                            { code: '300567', name: '精测电子', market: 'A股', comment: '检测设备' }
+                        ]},
+                        '清洗设备': { stocks: [
+                            { code: '688082', name: '盛美上海', market: 'A股', comment: '半导体清洗设备' },
+                            { code: '603690', name: '至纯科技', market: 'A股', comment: '半导体清洗设备' }
+                        ]},
+                        'CMP设备': { stocks: [
+                            { code: '688120', name: '华海清科', market: 'A股', comment: 'CMP设备龙头' }
+                        ]}
+                    },
+                    upstream: {
+                        '设备零部件': { stocks: [
+                            { code: '002372', name: '新莱应材', market: 'A股', comment: '半导体设备零部件' },
+                            { code: '300666', name: '江丰电子', market: 'A股', comment: '半导体靶材和零部件' },
+                            { code: '688596', name: '正帆科技', market: 'A股', comment: '气体系统和材料' },
+                            { code: '688409', name: '富创精密', market: 'A股', comment: '半导体设备零部件' },
+                            { code: '003043', name: '华亚智能', market: 'A股', comment: '半导体设备结构件' }
+                        ]},
+                        '材料前体/前驱体': { stocks: [
+                            { code: '002409', name: '雅克科技', market: 'A股', comment: '半导体材料前驱体' },
+                            { code: '300346', name: '南大光电', market: 'A股', comment: '电子特气和前驱体' },
+                            { code: '300666', name: '江丰电子', market: 'A股', comment: '半导体靶材和材料' }
+                        ]}
+                    }
+                },
+                '其他关键细分领域': {
+                    downstream: { 
+                        'AI手机/PC': { stocks: [
+                            { code: '002475', name: '立讯精密', market: 'A股', comment: '消费电子精密制造' },
+                            { code: '300433', name: '蓝思科技', market: 'A股', comment: '消费电子外观件' },
+                            { code: '002241', name: '歌尔股份', market: 'A股', comment: '声学和精密制造' },
+                            { code: '300115', name: '长盈精密', market: 'A股', comment: '精密结构件' },
+                            { code: '603890', name: '春秋电子', market: 'A股', comment: '笔记本电脑结构件' }
+                        ]},
+                        'AI眼镜/可穿戴': { stocks: [
+                            { code: '002241', name: '歌尔股份', market: 'A股', comment: 'VR/AR和声学' },
+                            { code: '002475', name: '立讯精密', market: 'A股', comment: '可穿戴设备' },
+                            { code: '300433', name: '蓝思科技', market: 'A股', comment: '可穿戴外观件' },
+                            { code: '001314', name: '亿道信息', market: 'A股', comment: '智能硬件ODM' }
+                        ]},
+                        '机器人/具身智能': { stocks: [
+                            { code: '300124', name: '汇川技术', market: 'A股', comment: '工业自动化和机器人' },
+                            { code: '688017', name: '绿的谐波', market: 'A股', comment: '谐波减速器' },
+                            { code: '002050', name: '三花智控', market: 'A股', comment: '热管理和机器人' },
+                            { code: '601689', name: '拓普集团', market: 'A股', comment: '汽车零部件和机器人' },
+                            { code: '603728', name: '鸣志电器', market: 'A股', comment: '控制电机和智能控制' }
+                        ]}
+                    },
+                    midstream: {
+                        '高速连接器': { stocks: [
+                            { code: '002475', name: '立讯精密', market: 'A股', comment: '高速连接器' },
+                            { code: '002179', name: '中航光电', market: 'A股', comment: '高速连接器' },
+                            { code: '002897', name: '意华股份', market: 'A股', comment: '通信连接器' },
+                            { code: '688668', name: '鼎通科技', market: 'A股', comment: '高速连接器' },
+                            { code: '688629', name: '华丰科技', market: 'A股', comment: '高速连接器' },
+                            { code: '300679', name: '电连技术', market: 'A股', comment: '高速射频连接器' }
+                        ]},
+                        '高速铜缆/DAC': { stocks: [
+                            { code: '002130', name: '沃尔核材', market: 'A股', comment: '高速线缆' },
+                            { code: '300913', name: '兆龙互连', market: 'A股', comment: '高速线缆和组件' },
+                            { code: '300252', name: '金信诺', market: 'A股', comment: '通信线缆' },
+                            { code: '002475', name: '立讯精密', market: 'A股', comment: '高速线缆' },
+                            { code: '601137', name: '博威合金', market: 'A股', comment: '铜合金材料' }
+                        ]},
+                        '服务器电源': { stocks: [
+                            { code: '002851', name: '麦格米特', market: 'A股', comment: '服务器电源' },
+                            { code: '300827', name: '欧陆通', market: 'A股', comment: '开关电源' },
+                            { code: '300593', name: '新雷能', market: 'A股', comment: '模块电源' },
+                            { code: '300814', name: '中富电路', market: 'A股', comment: 'PCB和电源' }
+                        ]},
+                        'HVDC高压直流': { stocks: [
+                            { code: '002364', name: '中恒电气', market: 'A股', comment: 'HVDC电源' },
+                            { code: '002518', name: '科士达', market: 'A股', comment: 'HVDC和UPS' },
+                            { code: '002335', name: '科华数据', market: 'A股', comment: 'HVDC和电源' },
+                            { code: '601126', name: '四方股份', market: 'A股', comment: '电力自动化' }
+                        ]},
+                        '超级电容/BBU': { stocks: [
+                            { code: '002484', name: '江海股份', market: 'A股', comment: '超级电容' },
+                            { code: '002245', name: '蔚蓝锂芯', market: 'A股', comment: '锂电池和储能' },
+                            { code: '002733', name: '雄韬股份', market: 'A股', comment: '储能和备用电源' }
+                        ]}
+                    }
+                }
+            };
+        }
+
+        function createUSChainData() {
+            return {
+                'AI计算芯片': {
+                    downstream: { 
+                        '芯片设计(CPU/GPU/ASIC/FPGA)': { stocks: [
+                            { code: 'NVDA', name: 'NVIDIA', market: '美股', comment: '全球AI芯片绝对龙头' },
+                            { code: 'AMD', name: 'AMD', market: '美股', comment: '数据中心AI芯片崛起' },
+                            { code: 'INTC', name: 'Intel', market: '美股', comment: 'GPU业务转型' },
+                            { code: 'AVGO', name: 'Broadcom', market: '美股', comment: '网络与AI芯片供应商' },
+                            { code: 'MRVL', name: 'Marvell', market: '美股', comment: '数据中心与通信芯片' },
+                            { code: 'QCOM', name: 'Qualcomm', market: '美股', comment: '移动与汽车AI芯片' },
+                            { code: 'LSCC', name: 'Lattice', market: '美股', comment: 'FPGA芯片设计' },
+                            { code: 'MCHP', name: 'Microchip', market: '美股', comment: '微控制器与混合信号芯片' }
+                        ]},
+                        '品牌/模组': { stocks: [
+                            { code: 'NVDA', name: 'NVIDIA', market: '美股', comment: 'AI芯片与解决方案品牌' },
+                            { code: 'AMD', name: 'AMD', market: '美股', comment: '高性能计算产品品牌' },
+                            { code: 'INTC', name: 'Intel', market: '美股', comment: '服务器与PC芯片品牌' }
+                        ]}
+                    },
+                    midstream: {
+                        '晶圆制造': { stocks: [
+                            { code: 'TSM', name: 'TSMC', market: '美股', comment: '全球最大晶圆代工厂' },
+                            { code: 'INTC', name: 'Intel', market: '美股', comment: 'IDM晶圆制造' },
+                            { code: 'GFS', name: 'GlobalFoundries', market: '美股', comment: '专业晶圆代工服务' }
+                        ]},
+                        '先进封装': { stocks: [
+                            { code: 'AMKR', name: 'Amkor', market: '美股', comment: '全球领先封装测试服务商' },
+                            { code: 'INTC', name: 'Intel', market: '美股', comment: '先进封装技术开发' },
+                            { code: 'TSM', name: 'TSMC', market: '美股', comment: '先进封装工艺服务' }
+                        ]}
+                    },
+                    upstream: {
+                        'EDA软件': { stocks: [
+                            { code: 'SNPS', name: 'Synopsys', market: '美股', comment: '全球EDA软件龙头' },
+                            { code: 'CDNS', name: 'Cadence', market: '美股', comment: 'EDA软件与IP供应商' },
+                            { code: 'ANSS', name: 'Ansys', market: '美股', comment: '多物理场仿真软件' },
+                            { code: 'ALU', name: 'Altium', market: '美股', comment: 'PCB设计与电子设计软件' }
+                        ]},
+                        'IP核授权': { stocks: [
+                            { code: 'ARM', name: 'Arm Holdings', market: '美股', comment: '全球IP授权与架构设计' },
+                            { code: 'AWE', name: 'Alphawave', market: '美股', comment: '高速连接IP授权' },
+                            { code: 'CDNS', name: 'Cadence', market: '美股', comment: 'EDA与IP综合解决方案' }
+                        ]},
+                        '硅片/晶圆': { stocks: [
+                            { code: 'ENTG', name: 'Entegris', market: '美股', comment: '晶圆处理材料与化学品' }
+                        ]},
+                        '光刻胶': { stocks: [
+                            { code: 'DD', name: 'DuPont', market: '美股', comment: '电子材料与光刻胶' },
+                            { code: 'ENTG', name: 'Entegris', market: '美股', comment: '半导体级化学品' }
+                        ]},
+                        '特种气体': { stocks: [
+                            { code: 'ENTG', name: 'Entegris', market: '美股', comment: '半导体特种气体' },
+                            { code: 'APD', name: 'Air Products', market: '美股', comment: '工业气体与特种气体' },
+                            { code: 'LIN', name: 'Linde', market: '美股', comment: '全球最大工业气体公司' }
+                        ]},
+                        '靶材': { stocks: [
+                            { code: 'HON', name: 'Honeywell', market: '美股', comment: '航空航天与材料科技' }
+                        ]},
+                        'CMP材料': { stocks: [
+                            { code: 'ENTG', name: 'Entegris', market: '美股', comment: 'CMP抛光材料与解决方案' }
+                        ]},
+                        '半导体设备': { stocks: [
+                            { code: 'AMAT', name: 'Applied Materials', market: '美股', comment: '全球最大半导体设备公司' },
+                            { code: 'LRCX', name: 'Lam Research', market: '美股', comment: '刻蚀与沉积设备' },
+                            { code: 'KLAC', name: 'KLA', market: '美股', comment: '检测与量测设备' },
+                            { code: 'ASML', name: 'ASML', market: '美股', comment: '全球唯一EUV光刻机' },
+                            { code: 'TER', name: 'Teradyne', market: '美股', comment: '半导体测试设备' },
+                            { code: 'ONTO', name: 'Onto Innovation', market: '美股', comment: '检测与过程控制设备' }
+                        ]}
+                    }
+                },
+                '存储芯片': {
+                    downstream: { 
+                        '品牌/模组商': { stocks: [
+                            { code: 'MU', name: 'Micron', market: '美股', comment: '全球存储芯片龙头' },
+                            { code: 'WDC', name: 'Western Digital', market: '美股', comment: 'HDD与Flash存储巨头' },
+                            { code: 'STX', name: 'Seagate', market: '美股', comment: '全球HDD领先企业' },
+                            { code: 'PSTG', name: 'Pure Storage', market: '美股', comment: '全闪存存储解决方案' }
+                        ]}
+                    },
+                    midstream: {
+                        '存储模组制造': { stocks: [
+                            { code: 'MU', name: 'Micron', market: '美股', comment: '存储芯片与模组制造' },
+                            { code: 'WDC', name: 'Western Digital', market: '美股', comment: '存储产品与模组' },
+                            { code: 'STX', name: 'Seagate', market: '美股', comment: '硬盘与存储解决方案' },
+                            { code: 'PSTG', name: 'Pure Storage', market: '美股', comment: '企业级存储系统' }
+                        ]},
+                        '封测': { stocks: [
+                            { code: 'AMKR', name: 'Amkor', market: '美股', comment: '存储芯片封装测试' },
+                            { code: 'MU', name: 'Micron', market: '美股', comment: '存储产品封测' },
+                            { code: 'INTC', name: 'Intel', market: '美股', comment: '存储芯片封装' }
+                        ]}
+                    },
+                    upstream: {
+                        'HBM材料': { stocks: [
+                            { code: 'ENTG', name: 'Entegris', market: '美股', comment: 'HBM相关材料' },
+                            { code: 'MMM', name: '3M', market: '美股', comment: '先进材料与解决方案' },
+                            { code: 'DOW', name: 'Dow', market: '美股', comment: '电子材料与化学品' }
+                        ]},
+                        '存储晶圆(DRAM/Flash)': { stocks: [
+                            { code: 'MU', name: 'Micron', market: '美股', comment: 'DRAM与NAND Flash制造' },
+                            { code: 'WDC', name: 'Western Digital', market: '美股', comment: 'Flash存储芯片' },
+                            { code: 'STX', name: 'Seagate', market: '美股', comment: 'HDD与存储技术' }
+                        ]},
+                        '存储控制芯片': { stocks: [
+                            { code: 'MRVL', name: 'Marvell', market: '美股', comment: '存储与网络控制芯片' },
+                            { code: 'SIMO', name: 'Silicon Motion', market: '美股', comment: 'NAND Flash控制器' },
+                            { code: 'MCHP', name: 'Microchip', market: '美股', comment: '存储接口解决方案' }
+                        ]}
+                    }
+                },
+                'PCB': {
+                    downstream: { 
+                        '设计/应用品牌': { stocks: [
+                            { code: 'DELL', name: 'Dell', market: '美股', comment: '服务器与PC设备品牌' },
+                            { code: 'HPE', name: 'HPE', market: '美股', comment: '企业级服务器与设备' },
+                            { code: 'CSCO', name: 'Cisco', market: '美股', comment: '网络与通信设备' }
+                        ]}
+                    },
+                    midstream: {
+                        '高端PCB制造': { stocks: [
+                            { code: 'TTMI', name: 'TTM Technologies', market: '美股', comment: '全球领先PCB制造商' },
+                            { code: 'SANM', name: 'Sanmina', market: '美股', comment: '电子制造服务' },
+                            { code: 'BHE', name: 'Benchmark', market: '美股', comment: '精密电子制造' },
+                            { code: 'JBL', name: 'Jabil', market: '美股', comment: '电子制造与供应链' },
+                            { code: 'FLEX', name: 'Flex', market: '美股', comment: '全球电子制造服务' },
+                            { code: 'CLS', name: 'Celestica', market: '美股', comment: '电子制造与解决方案' }
+                        ]}
+                    },
+                    upstream: {
+                        '覆铜板(CCL)': { stocks: [
+                            { code: 'ROG', name: 'Rogers Corp', market: '美股', comment: '高频与高性能材料' }
+                        ]},
+                        '电子玻纤布': { stocks: [
+                            { code: 'OC', name: 'Owens Corning', market: '美股', comment: '玻纤与复合材料' },
+                            { code: 'PPG', name: 'PPG Industries', market: '美股', comment: '特种涂料与材料' }
+                        ]},
+                        '铜箔': { stocks: [
+                            { code: 'FCX', name: 'Freeport-McMoRan', market: '美股', comment: '铜矿与金属材料' },
+                            { code: 'SCCO', name: 'Southern Copper', market: '美股', comment: '铜矿开采与加工' }
+                        ]},
+                        '电子树脂': { stocks: [
+                            { code: 'DOW', name: 'Dow', market: '美股', comment: '电子级树脂与材料' },
+                            { code: 'DD', name: 'DuPont', market: '美股', comment: '高性能电子材料' },
+                            { code: 'EMN', name: 'Eastman Chemical', market: '美股', comment: '特种化学品与材料' }
+                        ]},
+                        'PCB化学品/药水': { stocks: [
+                            { code: 'ENTG', name: 'Entegris', market: '美股', comment: '电子级化学品' },
+                            { code: 'DD', name: 'DuPont', market: '美股', comment: '电子材料与化学品' }
+                        ]},
+                        'PCB设备': { stocks: [
+                            { code: 'KLAC', name: 'KLA', market: '美股', comment: '检测与过程控制' },
+                            { code: 'ONTO', name: 'Onto Innovation', market: '美股', comment: '检测与量测设备' },
+                            { code: 'CAMT', name: 'Camtek', market: '美股', comment: 'PCB与半导体检测' },
+                            { code: 'VECO', name: 'Veeco', market: '美股', comment: '精密加工设备' },
+                            { code: 'MKSI', name: 'MKS Instruments', market: '美股', comment: '测量与控制设备' }
+                        ]},
+                        'EDA': { stocks: [
+                            { code: 'SNPS', name: 'Synopsys', market: '美股', comment: 'EDA与仿真软件' },
+                            { code: 'CDNS', name: 'Cadence', market: '美股', comment: '电子设计自动化' }
+                        ]}
+                    }
+                },
+                '光互联': {
+                    downstream: { 
+                        '整机设备商': { stocks: [
+                            { code: 'CSCO', name: 'Cisco', market: '美股', comment: '全球网络设备龙头' },
+                            { code: 'ANET', name: 'Arista Networks', market: '美股', comment: '企业级网络设备' },
+                            { code: 'JNPR', name: 'Juniper', market: '美股', comment: '网络设备与路由器' },
+                            { code: 'EXTR', name: 'Extreme Networks', market: '美股', comment: '网络设备与解决方案' }
+                        ]},
+                        '数据中心/运营商': { stocks: [
+                            { code: 'EQIX', name: 'Equinix', market: '美股', comment: '全球领先数据中心运营商' },
+                            { code: 'DLR', name: 'Digital Realty', market: '美股', comment: '数据中心基础设施' },
+                            { code: 'AMT', name: 'American Tower', market: '美股', comment: '通信基础设施REIT' }
+                        ]}
+                    },
+                    midstream: {
+                        '光器件(无源/有源)': { stocks: [
+                            { code: 'FN', name: 'Fabrinet', market: '美股', comment: '光电子封装与制造' },
+                            { code: 'COHR', name: 'Coherent', market: '美股', comment: '激光器与光器件' },
+                            { code: 'LITE', name: 'Lumentum', market: '美股', comment: '光器件与激光器' }
+                        ]},
+                        '光模块(400G/800G/1.6T)': { stocks: [
+                            { code: 'COHR', name: 'Coherent', market: '美股', comment: '光模块与光通信' },
+                            { code: 'AAOI', name: 'Applied Optoelectronics', market: '美股', comment: '光模块与光器件' },
+                            { code: 'CSCO', name: 'Cisco', market: '美股', comment: '网络与光通信设备' },
+                            { code: 'MRVL', name: 'Marvell', market: '美股', comment: '网络与光通信芯片' }
+                        ]},
+                        '光引擎': { stocks: [
+                            { code: 'COHR', name: 'Coherent', market: '美股', comment: '光引擎与光器件' },
+                            { code: 'MRVL', name: 'Marvell', market: '美股', comment: '光通信与网络芯片' }
+                        ]}
+                    },
+                    upstream: {
+                        '光芯片(VCSEL/EML/硅光)': { stocks: [
+                            { code: 'COHR', name: 'Coherent', market: '美股', comment: '光芯片与激光器' },
+                            { code: 'LITE', name: 'Lumentum', market: '美股', comment: '光芯片与激光器' },
+                            { code: 'AVGO', name: 'Broadcom', market: '美股', comment: '光通信与连接芯片' },
+                            { code: 'MRVL', name: 'Marvell', market: '美股', comment: '光通信与网络芯片' },
+                            { code: 'AAOI', name: 'Applied Optoelectronics', market: '美股', comment: '光芯片与光模块' }
+                        ]},
+                        '光器件材料': { stocks: [
+                            { code: 'COHR', name: 'Coherent', market: '美股', comment: '磷化铟与光学材料' },
+                            { code: 'GLW', name: 'Corning', market: '美股', comment: '光纤与特种玻璃' },
+                            { code: 'MKSI', name: 'MKS Instruments', market: '美股', comment: '测量与控制设备' }
+                        ]},
+                        '光通信设备': { stocks: [
+                            { code: 'MKSI', name: 'MKS Instruments', market: '美股', comment: '精密测量与设备' },
+                            { code: 'VECO', name: 'Veeco', market: '美股', comment: '精密制造设备' },
+                            { code: 'AEIS', name: 'Advanced Energy', market: '美股', comment: '电源与能量系统' }
+                        ]},
+                        'EDA/设计工具': { stocks: [
+                            { code: 'SNPS', name: 'Synopsys', market: '美股', comment: 'EDA与设计软件' },
+                            { code: 'CDNS', name: 'Cadence', market: '美股', comment: '电子设计与仿真' }
+                        ]}
+                    }
+                },
+                '机房/数据中心基础设施': {
+                    downstream: { 
+                        'IDC建设运营商': { stocks: [
+                            { code: 'EQIX', name: 'Equinix', market: '美股', comment: '全球领先数据中心REIT' },
+                            { code: 'DLR', name: 'Digital Realty', market: '美股', comment: '数据中心基础设施' },
+                            { code: 'AMT', name: 'American Tower', market: '美股', comment: '通信与数据中心' },
+                            { code: 'COR', name: 'CoreSite', market: '美股', comment: '数据中心与连接' }
+                        ]},
+                        '智算中心/云服务商': { stocks: [
+                            { code: 'MSFT', name: 'Microsoft', market: '美股', comment: 'Azure云计算与数据中心' },
+                            { code: 'AMZN', name: 'Amazon', market: '美股', comment: 'AWS云计算与数据中心' },
+                            { code: 'GOOGL', name: 'Google', market: '美股', comment: 'Google Cloud与数据中心' },
+                            { code: 'META', name: 'Meta', market: '美股', comment: '元宇宙与数据中心' },
+                            { code: 'ORCL', name: 'Oracle', market: '美股', comment: 'Oracle Cloud与数据中心' }
+                        ]}
+                    },
+                    midstream: {
+                        '液冷系统(冷板/CDU/浸没式)': { stocks: [
+                            { code: 'VRT', name: 'Vertiv', market: '美股', comment: '数据中心基础设施' },
+                            { code: 'NVT', name: 'nVent', market: '美股', comment: '电气连接与热管理' },
+                            { code: 'MOD', name: 'Modine Manufacturing', market: '美股', comment: '热管理与冷却系统' }
+                        ]},
+                        '电源系统(UPS/HVDC/BBU)': { stocks: [
+                            { code: 'VRT', name: 'Vertiv', market: '美股', comment: 'UPS与电源系统' },
+                            { code: 'ETN', name: 'Eaton', market: '美股', comment: '电力管理与UPS' },
+                            { code: 'VICR', name: 'Vicor', market: '美股', comment: '功率模块与电源' }
+                        ]},
+                        '服务器电源': { stocks: [
+                            { code: 'AEIS', name: 'Advanced Energy', market: '美股', comment: '精密电源与能源' },
+                            { code: 'VICR', name: 'Vicor', market: '美股', comment: '高性能电源模块' },
+                            { code: 'MPWR', name: 'Monolithic Power', market: '美股', comment: '电源管理芯片' }
+                        ]},
+                        '温控/配电设备': { stocks: [
+                            { code: 'VRT', name: 'Vertiv', market: '美股', comment: '数据中心温控与配电' },
+                            { code: 'NVT', name: 'nVent', market: '美股', comment: '电气与热管理' },
+                            { code: 'MOD', name: 'Modine', market: '美股', comment: '热管理系统' },
+                            { code: 'HON', name: 'Honeywell', market: '美股', comment: '楼宇与数据中心控制' }
+                        ]},
+                        '柴油发电机': { stocks: [
+                            { code: 'CMI', name: 'Cummins', market: '美股', comment: '柴油发动机与发电机' },
+                            { code: 'CAT', name: 'Caterpillar', market: '美股', comment: '柴油发电机与设备' },
+                            { code: 'GNRC', name: 'Generac', market: '美股', comment: '备用电源解决方案' }
+                        ]}
+                    },
+                    upstream: {
+                        '液冷材料(冷却液/氟化液)': { stocks: [
+                            { code: 'MMM', name: '3M', market: '美股', comment: '氟化液与先进材料' },
+                            { code: 'CC', name: 'Chemours', market: '美股', comment: '氟化学品与材料' },
+                            { code: 'DOW', name: 'Dow', market: '美股', comment: '冷却液与化学品' },
+                            { code: 'HON', name: 'Honeywell', market: '美股', comment: '特种材料与化学品' }
+                        ]},
+                        '机房建材/线缆': { stocks: [
+                            { code: 'GLW', name: 'Corning', market: '美股', comment: '光纤与通信线缆' },
+                            { code: 'COMM', name: 'CommScope', market: '美股', comment: '网络与连接解决方案' },
+                            { code: 'BDC', name: 'Belden', market: '美股', comment: '特种线缆与连接' }
+                        ]}
+                    }
+                },
+                'AI服务器/整机': {
+                    downstream: { 
+                        '品牌厂商/系统集成': { stocks: [
+                            { code: 'DELL', name: 'Dell', market: '美股', comment: '服务器与PC品牌' },
+                            { code: 'HPE', name: 'HPE', market: '美股', comment: '企业级服务器' },
+                            { code: 'SMCI', name: 'Super Micro', market: '美股', comment: '高效能服务器' }
+                        ]},
+                        '终端客户(互联网/政企/运营商)': { stocks: [
+                            { code: 'MSFT', name: 'Microsoft', market: '美股', comment: '云计算与服务器采购' },
+                            { code: 'AMZN', name: 'Amazon', market: '美股', comment: 'AWS与服务器采购' },
+                            { code: 'GOOGL', name: 'Google', market: '美股', comment: '云服务与服务器采购' },
+                            { code: 'META', name: 'Meta', market: '美股', comment: '数据中心与服务器采购' },
+                            { code: 'ORCL', name: 'Oracle', market: '美股', comment: '云服务与服务器采购' }
+                        ]}
+                    },
+                    midstream: {
+                        '服务器代工/制造': { stocks: [
+                            { code: 'DELL', name: 'Dell', market: '美股', comment: '服务器设计与制造' },
+                            { code: 'HPE', name: 'HPE', market: '美股', comment: '企业级服务器制造' },
+                            { code: 'SMCI', name: 'Super Micro Computer', market: '美股', comment: '高性能服务器制造' },
+                            { code: 'IBM', name: 'IBM', market: '美股', comment: '大型机与服务器' },
+                            { code: 'JBL', name: 'Jabil', market: '美股', comment: '服务器制造服务' },
+                            { code: 'FLEX', name: 'Flex', market: '美股', comment: '电子制造服务' },
+                            { code: 'CLS', name: 'Celestica', market: '美股', comment: '服务器制造' }
+                        ]}
+                    },
+                    upstream: {
+                        '核心零部件(芯片/存储/PCB/光互联)': { stocks: [
+                            { code: 'NVDA', name: 'NVIDIA', market: '美股', comment: 'AI与GPU芯片' },
+                            { code: 'AMD', name: 'AMD', market: '美股', comment: 'CPU与GPU芯片' },
+                            { code: 'INTC', name: 'Intel', market: '美股', comment: '服务器CPU芯片' },
+                            { code: 'AVGO', name: 'Broadcom', market: '美股', comment: '网络与连接芯片' },
+                            { code: 'MU', name: 'Micron', market: '美股', comment: '存储芯片与模组' },
+                            { code: 'COHR', name: 'Coherent', market: '美股', comment: '光模块与光通信' }
+                        ]},
+                        '高速连接器': { stocks: [
+                            { code: 'APH', name: 'Amphenol', market: '美股', comment: '连接器与互连解决方案' },
+                            { code: 'TEL', name: 'TE Connectivity', market: '美股', comment: '连接与传感器' },
+                            { code: 'BDC', name: 'Belden', market: '美股', comment: '连接器与线缆' }
+                        ]},
+                        '高速铜缆': { stocks: [
+                            { code: 'BDC', name: 'Belden', market: '美股', comment: '高速数据线缆' },
+                            { code: 'COMM', name: 'CommScope', market: '美股', comment: '网络与连接线缆' },
+                            { code: 'APH', name: 'Amphenol', market: '美股', comment: '线缆与连接方案' }
+                        ]},
+                        '结构件/散热': { stocks: [
+                            { code: 'MOD', name: 'Modine', market: '美股', comment: '热管理解决方案' },
+                            { code: 'MMM', name: '3M', market: '美股', comment: '先进材料与散热' }
+                        ]}
+                    }
+                },
+                '半导体设备与材料': {
+                    downstream: { 
+                        '晶圆厂/封测厂': { stocks: [
+                            { code: 'TSM', name: 'TSMC', market: '美股', comment: '全球最大晶圆代工厂' },
+                            { code: 'INTC', name: 'Intel', market: '美股', comment: 'IDM晶圆制造' },
+                            { code: 'GFS', name: 'GlobalFoundries', market: '美股', comment: '专业晶圆代工' },
+                            { code: 'AMKR', name: 'Amkor', market: '美股', comment: '全球领先封装测试' }
+                        ]}
+                    },
+                    midstream: {
+                        '薄膜设备(CVD/PVD/ALD)': { stocks: [
+                            { code: 'AMAT', name: 'Applied Materials', market: '美股', comment: '薄膜沉积设备' },
+                            { code: 'LRCX', name: 'Lam Research', market: '美股', comment: '沉积与刻蚀设备' },
+                            { code: 'VECO', name: 'Veeco', market: '美股', comment: '薄膜与精密加工' }
+                        ]},
+                        '刻蚀设备': { stocks: [
+                            { code: 'LRCX', name: 'Lam Research', market: '美股', comment: '全球刻蚀设备龙头' },
+                            { code: 'AMAT', name: 'Applied Materials', market: '美股', comment: '刻蚀与薄膜设备' }
+                        ]},
+                        '光刻/涂胶显影': { stocks: [
+                            { code: 'ASML', name: 'ASML', market: '美股', comment: '全球唯一EUV光刻机' },
+                            { code: 'KLAC', name: 'KLA', market: '美股', comment: '检测与量测设备' }
+                        ]},
+                        '检测/量测设备': { stocks: [
+                            { code: 'KLAC', name: 'KLA', market: '美股', comment: '检测与量测设备' },
+                            { code: 'ONTO', name: 'Onto Innovation', market: '美股', comment: '过程控制与检测' },
+                            { code: 'CAMT', name: 'Camtek', market: '美股', comment: '检测与量测' },
+                            { code: 'NVMI', name: 'Nova', market: '美股', comment: '半导体量测设备' }
+                        ]},
+                        '清洗设备': { stocks: [
+                            { code: 'LRCX', name: 'Lam Research', market: '美股', comment: '半导体清洗设备' }
+                        ]},
+                        'CMP设备': { stocks: [
+                            { code: 'AMAT', name: 'Applied Materials', market: '美股', comment: 'CMP抛光设备' }
+                        ]}
+                    },
+                    upstream: {
+                        '设备零部件': { stocks: [
+                            { code: 'ENTG', name: 'Entegris', market: '美股', comment: '设备材料与零部件' },
+                            { code: 'MKSI', name: 'MKS Instruments', market: '美股', comment: '测量与控制部件' },
+                            { code: 'UCTT', name: 'Ultra Clean Holdings', market: '美股', comment: '半导体设备部件' },
+                            { code: 'ICHR', name: 'Ichor Holdings', market: '美股', comment: '流体与气体系统' },
+                            { code: 'BRKS', name: 'Brooks Automation', market: '美股', comment: '自动化与设备' }
+                        ]},
+                        '材料前体/前驱体': { stocks: [
+                            { code: 'ENTG', name: 'Entegris', market: '美股', comment: '材料与前驱体' },
+                            { code: 'DD', name: 'DuPont', market: '美股', comment: '电子材料与化学品' }
+                        ]}
+                    }
+                },
+                '其他关键细分领域': {
+                    downstream: { 
+                        'AI手机/PC': { stocks: [
+                            { code: 'AAPL', name: 'Apple', market: '美股', comment: 'iPhone、Mac与AI设备' },
+                            { code: 'MSFT', name: 'Microsoft', market: '美股', comment: 'Surface与AI PC' },
+                            { code: 'DELL', name: 'Dell', market: '美股', comment: 'PC与笔记本电脑' },
+                            { code: 'HPQ', name: 'HP Inc', market: '美股', comment: 'PC与打印解决方案' }
+                        ]},
+                        'AI眼镜/可穿戴': { stocks: [
+                            { code: 'AAPL', name: 'Apple', market: '美股', comment: 'Apple Vision Pro与可穿戴' },
+                            { code: 'META', name: 'Meta', market: '美股', comment: 'Ray-Ban智能眼镜' },
+                            { code: 'GOOGL', name: 'Google', market: '美股', comment: '智能眼镜与可穿戴' }
+                        ]},
+                        '机器人/具身智能': { stocks: [
+                            { code: 'TSLA', name: 'Tesla', market: '美股', comment: 'Optimus机器人与AI' },
+                            { code: 'NVDA', name: 'NVIDIA', market: '美股', comment: '机器人AI平台' },
+                            { code: 'ISRG', name: 'Intuitive Surgical', market: '美股', comment: '手术机器人' },
+                            { code: 'IRBT', name: 'iRobot', market: '美股', comment: '家用机器人' }
+                        ]}
+                    },
+                    midstream: {
+                        '高速连接器': { stocks: [
+                            { code: 'APH', name: 'Amphenol', market: '美股', comment: '高速与精密连接器' },
+                            { code: 'TEL', name: 'TE Connectivity', market: '美股', comment: '连接与传感器' },
+                            { code: 'BDC', name: 'Belden', market: '美股', comment: '高速连接解决方案' }
+                        ]},
+                        '高速铜缆/DAC': { stocks: [
+                            { code: 'BDC', name: 'Belden', market: '美股', comment: '高速数据连接' },
+                            { code: 'APH', name: 'Amphenol', market: '美股', comment: '高速线缆与连接' },
+                            { code: 'COMM', name: 'CommScope', market: '美股', comment: '网络与连接线缆' }
+                        ]},
+                        '服务器电源': { stocks: [
+                            { code: 'VICR', name: 'Vicor', market: '美股', comment: '高性能电源模块' },
+                            { code: 'AEIS', name: 'Advanced Energy', market: '美股', comment: '精密电源系统' },
+                            { code: 'MPWR', name: 'Monolithic Power', market: '美股', comment: '电源管理芯片' },
+                            { code: 'TXN', name: 'Texas Instruments', market: '美股', comment: '电源与模拟芯片' }
+                        ]},
+                        'HVDC高压直流': { stocks: [
+                            { code: 'ETN', name: 'Eaton', market: '美股', comment: '电力管理系统' },
+                            { code: 'VRT', name: 'Vertiv', market: '美股', comment: '直流与交流电源' },
+                            { code: 'GE', name: 'General Electric', market: '美股', comment: '电力与能源系统' }
+                        ]},
+                        '超级电容/BBU': { stocks: [
+                        ]}
+                    }
+                }
+            };
+        }
+
+        const CN_CHAIN_DATA = createCNChainData();
+        const US_CHAIN_DATA = createUSChainData();
+
+        const app = {
+            currentTab: 'overview',
+            allStocks: { cn: [], us: [] },
+            articles: [],
+            currentArticleId: null,
+            init: function() {
+                try {
+                    this.articles = this.loadArticles();
+                    this.initDateTime();
+                    this.initTabs();
+                    this.initBlog();
+                    this.renderAll();
+                    this.renderArticleList();
+                    this.renderOverview();
+                } catch (e) {
+                    console.error('Initialization error:', e);
+                }
+            },
+            initDateTime: function() {
+                const update = function() { 
+                    document.getElementById('datetime').textContent = new Date().toLocaleString('zh-CN'); 
+                };
+                update();
+                setInterval(update, 1000);
+            },
+            initTabs: function() {
+                const that = this;
+                document.querySelectorAll('.nav-tab').forEach(function(tab) {
+                    tab.addEventListener('click', function() {
+                        document.querySelectorAll('.nav-tab').forEach(function(t) { t.classList.remove('active'); });
+                        tab.classList.add('active');
+                        document.querySelectorAll('.tab-content').forEach(function(c) { c.classList.remove('active'); });
+                        document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+                        that.currentTab = tab.dataset.tab;
+                    });
+                });
+            },
+            calculateStats: function(stocks) {
+                if (!stocks || stocks.length === 0) {
+                    return { avgChange: 0, upRatio: 0 };
+                }
+                const avgChange = stocks.reduce(function(sum, s) { return sum + s.changeNum; }, 0) / stocks.length;
+                const upCount = stocks.filter(function(s) { return s.changeNum >= 0; }).length;
+                const upRatio = (upCount / stocks.length) * 100;
+                return { avgChange: avgChange, upRatio: upRatio };
+            },
+            renderMarket: function(market) {
+                const chainData = market === 'cn' ? CN_CHAIN_DATA : US_CHAIN_DATA;
+                const allStocks = [];
+                const that = this;
+                Object.values(chainData).forEach(function(sector) {
+                    ['downstream', 'midstream', 'upstream'].forEach(function(level) {
+                        Object.values(sector[level] || {}).forEach(function(category) {
+                            (category.stocks || []).forEach(function(stock) {
+                                allStocks.push(generateStockData(stock));
+                            });
+                        });
+                    });
+                });
+                this.allStocks[market] = allStocks;
+                if (allStocks.length === 0) return;
+                const sorted = allStocks.slice().sort(function(a, b) { return b.changeNum - a.changeNum; });
+                const stats = this.calculateStats(allStocks);
+                const topGainer = sorted[0];
+                const topLoser = sorted[sorted.length - 1];
+                const avgEl = document.getElementById(market + '-total-change');
+                avgEl.textContent = (stats.avgChange >= 0 ? '+' : '') + stats.avgChange.toFixed(2) + '%';
+                avgEl.className = 'overview-value ' + (stats.avgChange >= 0 ? 'color-up' : 'color-down');
+                const ratioEl = document.getElementById(market + '-total-upratio');
+                ratioEl.textContent = stats.upRatio.toFixed(1) + '%';
+                ratioEl.className = 'overview-value ' + (stats.upRatio >= 50 ? 'color-up' : 'color-down');
+                document.getElementById(market + '-top-gainer').textContent = topGainer.name + ' +' + topGainer.change + '%';
+                document.getElementById(market + '-top-gainer').className = 'overview-value color-up';
+                document.getElementById(market + '-top-loser').textContent = topLoser.name + ' ' + topLoser.change + '%';
+                document.getElementById(market + '-top-loser').className = 'overview-value color-down';
+            },
+            renderChain: function(market) {
+                const chainData = market === 'cn' ? CN_CHAIN_DATA : US_CHAIN_DATA;
+                const container = document.getElementById(market + '-sectors');
+                container.innerHTML = '';
+                const that = this;
+                const levelLabels = { downstream: '下游设计/品牌/应用', midstream: '中游制造/封测', upstream: '上游材料/设备/EDA' };
+                SECTOR_NAMES.forEach(function(sectorName, index) {
+                    const sectorData = chainData[sectorName];
+                    if (!sectorData) return;
+                    const block = document.createElement('div');
+                    block.className = 'sector-block';
+                    const allStocks = [];
+                    ['downstream', 'midstream', 'upstream'].forEach(function(level) {
+                        Object.values(sectorData[level] || {}).forEach(function(category) {
+                            (category.stocks || []).forEach(function(stock) {
+                                allStocks.push(generateStockData(stock));
+                            });
+                        });
+                    });
+                    const stats = that.calculateStats(allStocks);
+                    let sectorHtml = `
+                        <div class="sector-header" onclick="this.parentElement.classList.toggle('collapsed')">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <span class="toggle-icon">▼</span>
+                                <span class="sector-name">${sectorName}</span>
+                            </div>
+                            <div class="sector-stats">
+                                <span class="sector-stat ${stats.avgChange >= 0 ? 'color-up' : 'color-down'}">
+                                    平均 ${stats.avgChange >= 0 ? '+' : ''}${stats.avgChange.toFixed(2)}%
+                                </span>
+                                <span class="sector-stat ${stats.upRatio >= 50 ? 'color-up' : 'color-down'}">
+                                    上涨占比 ${stats.upRatio.toFixed(1)}%
+                                </span>
+                            </div>
+                        </div>
+                        <div class="sector-content">
+                    `;
+                    ['downstream', 'midstream', 'upstream'].forEach(function(levelKey) {
+                        const levelData = sectorData[levelKey];
+                        if (!levelData) return;
+                        sectorHtml += `
+                            <div class="level-container">
+                                <div class="level-label">${levelLabels[levelKey]}</div>
+                                <div class="nodes-row">
+                        `;
+                        Object.entries(levelData).forEach(function(entry) {
+                            const categoryName = entry[0];
+                            const categoryData = entry[1];
+                            const stocks = (categoryData.stocks || []).map(function(s) { return generateStockData(s); });
+                            const catStats = that.calculateStats(stocks);
+                            sectorHtml += `
+                                <div class="node level-${levelKey}">
+                                    <div class="node-header">
+                                        <div><div class="node-name">${categoryName}</div></div>
+                                        <div class="node-stats">
+                                            <span class="node-stat ${catStats.avgChange >= 0 ? 'color-up' : 'color-down'}">
+                                                ${catStats.avgChange >= 0 ? '+' : ''}${catStats.avgChange.toFixed(2)}%
+                                            </span>
+                                            <span class="node-stat ${catStats.upRatio >= 50 ? 'color-up' : 'color-down'}">
+                                                ${catStats.upRatio.toFixed(0)}%↑
+                                            </span>
+                                            <button class="expand-btn" onclick="event.stopPropagation(); this.closest('.node').classList.toggle('expanded');">+</button>
+                                        </div>
+                                    </div>
+                                    <div class="stocks-panel">
+                            `;
+                            stocks.forEach(function(stock) {
+                                sectorHtml += `
+                                    <div class="stock-card">
+                                        <div class="stock-header">
+                                            <div>
+                                                <div class="stock-name">${stock.name} (${stock.market})</div>
+                                                <div class="stock-code">${stock.code}</div>
+                                            </div>
+                                            <div class="stock-change ${stock.changeNum >= 0 ? 'color-up' : 'color-down'}" style="font-size: 14px; font-weight: 600;">
+                                                ${stock.changeNum >= 0 ? '+' : ''}${stock.change}%
+                                            </div>
+                                        </div>
+                                        ${stock.comment ? '<div class="stock-comment">' + stock.comment + '</div>' : ''}
+                                    </div>
+                                `;
+                            });
+                            sectorHtml += `
+                                    </div>
+                                </div>
+                            `;
+                        });
+                        sectorHtml += `
+                                </div>
+                            </div>
+                        `;
+                    });
+                    sectorHtml += '</div>';
+                    block.innerHTML = sectorHtml;
+                    container.appendChild(block);
+                });
+            },
+            renderAll: function() {
+                this.renderMarket('cn');
+                this.renderMarket('us');
+                this.renderChain('cn');
+                this.renderChain('us');
+            },
+            renderOverview: function() {
+                // 收集所有股票数据
+                const allStocks = [];
+                const sectorChanges = {};
+                const that = this;
+                
+                // 从A股数据收集
+                Object.entries(CN_CHAIN_DATA).forEach(function(entry) {
+                    const sectorName = entry[0];
+                    const sectorData = entry[1];
+                    const sectorStocks = [];
+                    
+                    ['downstream', 'midstream', 'upstream'].forEach(function(level) {
+                        Object.values(sectorData[level] || {}).forEach(function(category) {
+                            (category.stocks || []).forEach(function(stock) {
+                                const stockWithData = generateStockData(stock);
+                                stockWithData.sector = sectorName;
+                                allStocks.push(stockWithData);
+                                sectorStocks.push(stockWithData);
+                            });
+                        });
+                    });
+                    
+                    if (sectorStocks.length > 0) {
+                        const stats = that.calculateStats(sectorStocks);
+                        sectorChanges[sectorName] = stats.avgChange;
+                    }
+                });
+                
+                // 1. 渲染今日最大涨幅
+                const topGainers = allStocks.slice().sort(function(a, b) { return b.changeNum - a.changeNum; }).slice(0, 5);
+                const topGainersEl = document.getElementById('top-gainers');
+                if (topGainersEl) {
+                    topGainersEl.innerHTML = topGainers.map(function(stock) {
+                        return `
+                            <div class="stock-item">
+                                <div class="stock-info">
+                                    <div class="stock-name">${stock.name}</div>
+                                    <div class="stock-sector">${stock.sector} · ${stock.code}</div>
+                                </div>
+                                <div class="stock-change color-up">+${stock.change}%</div>
+                            </div>
+                        `;
+                    }).join('');
+                }
+                
+                // 2. 渲染今日最大跌幅
+                const topLosers = allStocks.slice().sort(function(a, b) { return a.changeNum - b.changeNum; }).slice(0, 5);
+                const topLosersEl = document.getElementById('top-losers');
+                if (topLosersEl) {
+                    topLosersEl.innerHTML = topLosers.map(function(stock) {
+                        return `
+                            <div class="stock-item">
+                                <div class="stock-info">
+                                    <div class="stock-name">${stock.name}</div>
+                                    <div class="stock-sector">${stock.sector} · ${stock.code}</div>
+                                </div>
+                                <div class="stock-change color-down">${stock.change}%</div>
+                            </div>
+                        `;
+                    }).join('');
+                }
+                
+                // 3. 渲染板块热度排行
+                const sortedSectors = Object.entries(sectorChanges).sort(function(a, b) { return b[1] - a[1]; });
+                const sectorRankEl = document.getElementById('sector-rank');
+                if (sectorRankEl) {
+                    sectorRankEl.innerHTML = sortedSectors.map(function(entry, index) {
+                        const sectorName = entry[0];
+                        const change = entry[1];
+                        return `
+                            <div class="sector-rank-item">
+                                <div class="sector-rank-name">
+                                    <span style="margin-right: 12px; font-weight: 700; color: #58a6ff;">#${index + 1}</span>
+                                    ${sectorName}
+                                </div>
+                                <div class="stock-change ${change >= 0 ? 'color-up' : 'color-down'}">
+                                    ${change >= 0 ? '+' : ''}${change.toFixed(2)}%
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                }
+                
+                // 4. 渲染市场总体概况
+                const marketStatsEl = document.getElementById('market-stats');
+                if (marketStatsEl) {
+                    const upCount = allStocks.filter(function(s) { return s.changeNum > 0; }).length;
+                    const downCount = allStocks.filter(function(s) { return s.changeNum < 0; }).length;
+                    const flatCount = allStocks.filter(function(s) { return s.changeNum === 0; }).length;
+                    
+                    // 模拟成交额
+                    const totalVolume = (Math.random() * 5000 + 3000).toFixed(0);
+                    
+                    marketStatsEl.innerHTML = `
+                        <div class="stat-card">
+                            <div class="stat-value color-up">${upCount}</div>
+                            <div class="stat-label">上涨家数</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value color-down">${downCount}</div>
+                            <div class="stat-label">下跌家数</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" style="color: #8b949e;">${flatCount}</div>
+                            <div class="stat-label">平盘家数</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" style="color: #58a6ff;">${totalVolume}亿</div>
+                            <div class="stat-label">总成交额</div>
+                        </div>
+                    `;
+                }
+            },
+            loadArticles: function() {
+                try {
+                    const stored = localStorage.getItem('ai_chain_articles');
+                    return stored ? JSON.parse(stored) : DEFAULT_ARTICLES.slice();
+                } catch (e) {
+                    return DEFAULT_ARTICLES.slice();
+                }
+            },
+            saveArticles: function() {
+                try {
+                    localStorage.setItem('ai_chain_articles', JSON.stringify(this.articles));
+                } catch (e) {
+                    console.error('Failed to save articles:', e);
+                }
+            },
+            renderArticleList: function() {
+                const grid = document.getElementById('article-grid');
+                if (!grid) return;
+                const that = this;
+                grid.innerHTML = this.articles.map(function(article) {
+                    return `
+                        <div class="article-card" data-id="${article.id}" onclick="app.viewArticle('${article.id}')">
+                            <div class="article-card-title">${article.title}</div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 13px; color: #8b949e; margin-top: 12px;">
+                                <span>${new Date(article.createdAt).toLocaleDateString('zh-CN')}</span>
+                                <span>${article.tags.join(', ')}</span>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            },
+            newArticle: function() {
+                this.currentArticleId = null;
+                document.getElementById('editor-title').textContent = '新文章';
+                document.getElementById('article-title-input').value = '';
+                document.getElementById('article-tags-input').value = '';
+                document.getElementById('article-content-input').value = '';
+                document.getElementById('blog-list').style.display = 'none';
+                document.getElementById('blog-editor').style.display = 'block';
+                document.getElementById('article-view').style.display = 'none';
+            },
+            viewArticle: function(id) {
+                const article = this.articles.find(function(a) { return a.id === id; });
+                if (!article) return;
+                this.currentArticleId = id;
+                document.getElementById('view-title').textContent = article.title;
+                let preview = document.getElementById('article-content-preview');
+                preview.className = 'markdown-body';
+                preview.innerHTML = this.markdownToHtml(article.content);
+                document.getElementById('blog-list').style.display = 'none';
+                document.getElementById('blog-editor').style.display = 'none';
+                document.getElementById('article-view').style.display = 'block';
+            },
+            editArticle: function() {
+                const article = this.articles.find(function(a) { return a.id === this.currentArticleId; }.bind(this));
+                if (!article) return;
+                document.getElementById('editor-title').textContent = '编辑文章';
+                document.getElementById('article-title-input').value = article.title;
+                document.getElementById('article-tags-input').value = article.tags.join(', ');
+                document.getElementById('article-content-input').value = article.content;
+                document.getElementById('blog-list').style.display = 'none';
+                document.getElementById('blog-editor').style.display = 'block';
+                document.getElementById('article-view').style.display = 'none';
+            },
+            saveArticle: function() {
+                const title = document.getElementById('article-title-input').value.trim();
+                const tagsStr = document.getElementById('article-tags-input').value.trim();
+                const content = document.getElementById('article-content-input').value.trim();
+                if (!title) {
+                    alert('请输入标题');
+                    return;
+                }
+                const tags = tagsStr.split(',').map(function(t) { return t.trim(); }).filter(function(t) { return t; });
+                const now = new Date().toISOString();
+                if (this.currentArticleId) {
+                    const index = this.articles.findIndex(function(a) { return a.id === app.currentArticleId; });
+                    if (index !== -1) {
+                        this.articles[index] = {
+                            ...this.articles[index],
+                            title: title,
+                            tags: tags,
+                            content: content,
+                            updatedAt: now
+                        };
+                    }
+                } else {
+                    const newArticle = {
+                        id: Date.now().toString(),
+                        title: title,
+                        tags: tags,
+                        content: content,
+                        createdAt: now,
+                        updatedAt: now
+                    };
+                    this.articles.unshift(newArticle);
+                }
+                this.saveArticles();
+                this.renderArticleList();
+                this.showArticleList();
+            },
+            cancelEdit: function() {
+                this.showArticleList();
+            },
+            deleteArticle: function() {
+                const that = this;
+                if (!this.currentArticleId) return;
+                if (!confirm('确定要删除这篇文章吗？')) return;
+                this.articles = this.articles.filter(function(a) { return a.id !== that.currentArticleId; });
+                this.saveArticles();
+                this.renderArticleList();
+                this.showArticleList();
+            },
+            showArticleList: function() {
+                document.getElementById('blog-list').style.display = 'block';
+                document.getElementById('blog-editor').style.display = 'none';
+                document.getElementById('article-view').style.display = 'none';
+                this.currentArticleId = null;
+            },
+            exportArticles: function() {
+                const dataStr = JSON.stringify(this.articles, null, 2);
+                const blob = new Blob([dataStr], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'ai_chain_articles.json';
+                a.click();
+                URL.revokeObjectURL(url);
+            },
+            importArticles: function() {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = '.json';
+                const that = this;
+                input.onchange = function(e) {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        try {
+                            const imported = JSON.parse(event.target.result);
+                            if (Array.isArray(imported)) {
+                                that.articles = imported;
+                                that.saveArticles();
+                                that.renderArticleList();
+                                alert('导入成功');
+                            } else {
+                                alert('无效的文件格式');
+                            }
+                        } catch (error) {
+                            alert('导入失败');
+                        }
+                    };
+                    reader.readAsText(file);
+                };
+                input.click();
+            },
+            markdownToHtml: function(text) {
+                if (!text) return '';
+                let html = text
+                    .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+                    .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+                    .replace(/^# (.*$)/gim, '<h1>$1</h1>')
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                    .replace(/`(.*?)`/g, '<code>$1</code>')
+                    .replace(/\n\n/g, '</p><p>')
+                    .replace(/\n/g, '<br>');
+                return '<p>' + html + '</p>';
+            },
+            initBlog: function() {
+                const that = this;
+                document.getElementById('new-btn').addEventListener('click', function() { that.newArticle(); });
+                document.getElementById('save-btn').addEventListener('click', function() { that.saveArticle(); });
+                document.getElementById('cancel-edit-btn').addEventListener('click', function() { that.cancelEdit(); });
+                document.getElementById('back-btn').addEventListener('click', function() { that.showArticleList(); });
+                document.getElementById('edit-btn').addEventListener('click', function() { that.editArticle(); });
+                document.getElementById('delete-btn').addEventListener('click', function() { that.deleteArticle(); });
+                document.getElementById('import-btn').addEventListener('click', function() { that.importArticles(); });
+                document.getElementById('export-btn').addEventListener('click', function() { that.exportArticles(); });
+            }
+        };
+
+        window.app = app;
+        app.init();
+    </script>
+</body>
+</html>
