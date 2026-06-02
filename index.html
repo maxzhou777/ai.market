@@ -399,24 +399,24 @@
 
     <script>
         const SECTOR_NAMES = ['AI计算芯片', '存储芯片', 'PCB', '光互联', '机房/数据中心基础设施', 'AI服务器/整机', '半导体设备与材料', '其他关键细分领域'];
-        const DEFAULT_ARTICLES = [
-            {
-                id: '1',
-                title: 'AI产业链投资逻辑分析',
-                content: '# AI产业链投资逻辑分析\n\n## 上游：芯片是基石\n\nAI产业的发展离不开强大的算力支撑，而芯片则是算力的核心。从EDA软件、半导体设备到晶圆制造，每个环节都至关重要。',
-                tags: ['AI', '投资', '产业链'],
-                createdAt: new Date('2024-01-15').toISOString(),
-                updatedAt: new Date('2024-01-15').toISOString()
-            },
-            {
-                id: '2',
-                title: '光模块行业展望',
-                content: '# 光模块行业展望\n\n光模块是数据中心互联的关键设备，随着AI大模型训练需求的爆发，800G、1.6T高速光模块需求正在快速增长。',
-                tags: ['光通信', '光模块', 'AI'],
-                createdAt: new Date('2024-01-10').toISOString(),
-                updatedAt: new Date('2024-01-10').toISOString()
-            }
-        ];
+  const DEFAULT_ARTICLES = [
+        {
+            id: '1',
+            title: '第一个Vibe Coding网站',
+            content: '相信这只是一个开始！\n使用了TRAE，未来会尝试更多工具。',
+            tags: ['个人成长'],
+            createdAt: new Date('2024-01-15T00:00:00.000Z').toISOString(),
+            updatedAt: new Date('2026-06-02T08:42:00.971Z').toISOString()
+        },
+        {
+            id: '2',
+            title: '学习AI的感想',
+            content: '一、\nAI导致认知变成现实更容易了，这会导致：1. 未来不同城市、环境中认知差异变大。而创业者要在信息节点的城市人圈子中。2. 更容易出年轻英雄，因为年轻人idea更多，不需要打磨那么多社会及技术的基础知识。\n\n二、\nAI发展的比拼已经从量走向了质，不同token卖的价格差别很大，背后是算法质量的不同。\n可能未来算法相比算力更重要。但是算力是否能转化成算法的快速提升？我觉得是有限的。',
+            tags: ['AI'],
+            createdAt: new Date('2024-01-10T00:00:00.000Z').toISOString(),
+            updatedAt: new Date('2026-06-02T08:47:28.056Z').toISOString()
+        }
+];
 
         function generateStockData(stock) {
             const change = (Math.random() - 0.45) * 12;
